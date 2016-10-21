@@ -27,8 +27,8 @@ function! s:EnableCleanSettings() abort
     endif
 endfunction
 
-function! s:IsException() abort
-    return &diff || (&filetype ==# '') || (&filetype ==# 'git') || (&filetype ==# 'messages')
+function! s:IsForcedClean() abort
+    return &diff || get(b:, 'clean_mode_force') || (index(g:clean_mode_force, &filetype) != -1)
 endfunction
 
 function! s:RestorePreviousSettings() abort
@@ -73,7 +73,7 @@ function! s:ApplyCleanMode() abort
         return
     endif
 
-    if get(t:, 'clean_mode', s:clean_mode_default) || s:IsException()
+    if get(t:, 'clean_mode', s:clean_mode_default) || s:IsForcedClean()
         call s:EnableCleanSettings()
     else
         call s:RestorePreviousSettings()
@@ -105,10 +105,10 @@ function! s:ToggleDefaultCleanMode() abort
 endfunction
 
 function! clean_mode#status() abort
-    if get(t:, 'clean_mode', s:clean_mode_default) && &modifiable && !s:IsException()
+    if get(t:, 'clean_mode', s:clean_mode_default) && &modifiable && !s:IsForcedClean()
         return '[C]'
-    elseif s:IsException()
-        return '[X]'
+    elseif s:IsForcedClean()
+        return '[F]'
     else
         return ''
     endif
@@ -117,9 +117,14 @@ endfunction
 function! clean_mode#init() abort
     let s:clean_mode_default = exists('$VIM_FORCE_CLEAN')
 
+    if !exists('g:clean_mode_force')
+        let g:clean_mode_force = ['']
+    endif
+
     augroup clean_mode
         autocmd!
         autocmd BufEnter * call s:ApplyCleanMode()
+        autocmd FileType * call s:ApplyCleanMode()
     augroup END
 
     if v:vim_did_enter
