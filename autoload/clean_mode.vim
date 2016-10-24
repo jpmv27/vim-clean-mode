@@ -4,24 +4,32 @@ function! s:GoToWindow(nr) abort
     execute a:nr . 'wincmd w'
 endfunction
 
-function! s:EnableCleanSettings() abort
-    if !exists('b:clean_saved_spell')
-        let b:clean_saved_spell = &spell
-        setlocal nospell
+function! s:SaveCurrentSettings() abort
+    if exists('b:clean_saved_settings')
+        return
     endif
 
-    if !exists('b:clean_saved_cc')
-        let b:clean_saved_cc = &cc
-        setlocal cc=
-    endif
+    let b:clean_saved_settings = {}
 
-    if !exists('b:clean_saved_bws') && exists('b:better_whitespace_enabled')
-        let b:clean_saved_bws = b:better_whitespace_enabled
+    let b:clean_saved_settings['spell'] = &spell
+
+    let b:clean_saved_settings['cc'] = &cc
+
+    let b:clean_saved_settings['bws'] = get(b:, 'better_whitespace_enabled')
+
+    let b:clean_saved_settings['syntastic'] = [exists('b:syntastic_skip_checks'), get(b:, 'syntastic_skip_checks', 0), exists('b:syntastic_loclist')]
+endfunction
+
+function! s:ApplyCleanSettings() abort
+    setlocal nospell
+
+    setlocal cc=
+
+    if get(b:, 'better_whitespace_enabled')
         DisableWhitespace
     endif
 
-    if !exists('b:clean_saved_syntastic')
-        let b:clean_saved_syntastic = [exists('b:syntastic_skip_checks'), get(b:, 'syntastic_skip_checks', 0), exists('b:syntastic_loclist')]
+    if !get(b:, 'syntastic_skip_checks')
         let b:syntastic_skip_checks = 1
         SyntasticReset
     endif
@@ -32,45 +40,37 @@ function! s:IsForcedClean() abort
 endfunction
 
 function! s:RestorePreviousSettings() abort
-    if exists('b:clean_saved_spell')
-        if b:clean_saved_spell
-            setlocal spell
-        endif
-
-        unlet b:clean_saved_spell
+    if !exists('b:clean_saved_settings')
+        return
     endif
 
-    if exists('b:clean_saved_cc')
-        execute 'setlocal cc=' . b:clean_saved_cc
-        unlet b:clean_saved_cc
+    if b:clean_saved_settings['spell']
+        setlocal spell
     endif
 
-    if exists('b:clean_saved_bws')
-        if b:clean_saved_bws
-            EnableWhitespace
-        endif
+    execute 'setlocal cc=' . b:clean_saved_settings['cc']
 
-        unlet b:clean_saved_bws
+    if b:clean_saved_settings['bws']
+        EnableWhitespace
     endif
 
-    if exists('b:clean_saved_syntastic')
-        if b:clean_saved_syntastic[0]
-            let b:syntastic_skip_checks = b:clean_saved_syntastic[1]
-        else
-            unlet! b:syntastic_skip_checks
-        endif
-
-        if b:clean_saved_syntastic[2]
-            SyntasticCheck
-        endif
-
-        unlet b:clean_saved_syntastic
+    if b:clean_saved_settings['syntastic'][0]
+        let b:syntastic_skip_checks = b:clean_saved_settings['syntastic'][1]
+    else
+        unlet! b:syntastic_skip_checks
     endif
+
+    if b:clean_saved_settings['syntastic'][2]
+        SyntasticCheck
+    endif
+
+    unlet! b:clean_saved_settings
 endfunction
 
 function! s:ApplyCleanMode() abort
     if get(t:, 'clean_mode', s:clean_mode_default) || s:IsForcedClean()
-        call s:EnableCleanSettings()
+        call s:SaveCurrentSettings()
+        call s:ApplyCleanSettings()
     else
         call s:RestorePreviousSettings()
     endif
@@ -101,12 +101,16 @@ function! s:ToggleDefaultCleanMode() abort
 endfunction
 
 function! clean_mode#status() abort
-    if get(t:, 'clean_mode', s:clean_mode_default) && !s:IsForcedClean()
-        return '[C]'
-    elseif s:IsForcedClean()
+    if s:IsForcedClean()
         return '[F]'
     else
-        return ''
+        if !exists('t:clean_mode') && s:clean_mode_default
+            return '[D]'
+        elseif get(t:, 'clean_mode')
+            return '[C]'
+        else
+            return ''
+        endif
     endif
 endfunction
 
