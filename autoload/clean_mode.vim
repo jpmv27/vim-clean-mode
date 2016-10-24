@@ -120,7 +120,6 @@ function! clean_mode#init() abort
     augroup clean_mode
         autocmd!
         autocmd BufEnter * call s:ApplyCleanMode()
-        autocmd FileType * call s:ApplyCleanMode()
     augroup END
 
     if v:vim_did_enter
