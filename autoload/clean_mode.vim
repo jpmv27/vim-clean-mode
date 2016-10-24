@@ -69,10 +69,6 @@ function! s:RestorePreviousSettings() abort
 endfunction
 
 function! s:ApplyCleanMode() abort
-    if !&modifiable
-        return
-    endif
-
     if get(t:, 'clean_mode', s:clean_mode_default) || s:IsForcedClean()
         call s:EnableCleanSettings()
     else
@@ -105,7 +101,7 @@ function! s:ToggleDefaultCleanMode() abort
 endfunction
 
 function! clean_mode#status() abort
-    if get(t:, 'clean_mode', s:clean_mode_default) && &modifiable && !s:IsForcedClean()
+    if get(t:, 'clean_mode', s:clean_mode_default) && !s:IsForcedClean()
         return '[C]'
     elseif s:IsForcedClean()
         return '[F]'
