@@ -126,7 +126,7 @@ function! clean_mode#init() abort
         autocmd BufEnter * call s:ApplyCleanMode()
     augroup END
 
-    if v:vim_did_enter
+    if exists('v:vim_did_enter') && v:vim_did_enter
         call s:UpdateAllWindows()
     else
         augroup clean_mode
