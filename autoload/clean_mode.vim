@@ -11,6 +11,8 @@ function! s:SaveCurrentSettings() abort
 
     let b:clean_saved_settings = {}
 
+    let b:clean_saved_settings['syntax'] = &syntax
+
     let b:clean_saved_settings['spell'] = &spell
 
     let b:clean_saved_settings['cc'] = &cc
@@ -21,6 +23,8 @@ function! s:SaveCurrentSettings() abort
 endfunction
 
 function! s:ApplyCleanSettings() abort
+    setlocal syntax=OFF
+
     setlocal nospell
 
     setlocal cc=
@@ -43,6 +47,8 @@ function! s:RestorePreviousSettings() abort
     if !exists('b:clean_saved_settings')
         return
     endif
+
+    execute 'setlocal syntax=' . b:clean_saved_settings['syntax']
 
     if b:clean_saved_settings['spell']
         setlocal spell
