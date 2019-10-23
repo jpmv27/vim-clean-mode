@@ -98,6 +98,11 @@ function! s:ToggleCleanMode() abort
     call s:UpdateAllWindows()
 endfunction
 
+function! s:UpdateCleanMode(val) abort
+    let t:clean_mode = a:val
+    call s:UpdateAllWindows()
+endfunction
+
 function! s:ToggleDefaultCleanMode() abort
     let s:clean_mode_default = !s:clean_mode_default
 
@@ -142,4 +147,6 @@ function! clean_mode#init() abort
 
     command! -nargs=0 ToggleCleanMode call s:ToggleCleanMode()
     command! -nargs=0 ToggleDefaultCleanMode call s:ToggleDefaultCleanMode()
+    command! -nargs=0 EnableCleanMode call s:UpdateCleanMode(1)
+    command! -nargs=0 DisableCleanMode call s:UpdateCleanMode(0)
 endfunction
