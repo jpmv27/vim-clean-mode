@@ -40,7 +40,7 @@ function! s:ApplyCleanSettings() abort
 endfunction
 
 function! s:IsForcedClean() abort
-    return &diff || get(b:, 'clean_mode_force') || (index(g:clean_mode_force, &filetype) != -1)
+    return (line('$') > g:clean_mode_force_threshold) || &diff || get(b:, 'clean_mode_force') || (index(g:clean_mode_force, &filetype) != -1)
 endfunction
 
 function! s:RestorePreviousSettings() abort
@@ -127,6 +127,10 @@ endfunction
 
 function! clean_mode#init() abort
     let s:clean_mode_default = exists('$VIM_FORCE_CLEAN')
+
+    if !exists('g:clean_mode_force_threshold')
+        let g:clean_mode_force_threshold = 10000
+    endif
 
     if !exists('g:clean_mode_force')
         let g:clean_mode_force = ['']
